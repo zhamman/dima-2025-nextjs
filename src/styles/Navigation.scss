@@ -1,0 +1,129 @@
+@import "variables";
+
+.main-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 7;
+  padding: 2rem;
+  mix-blend-mode: difference;
+  .nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .logo {
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: $accent-color;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+
+    a {
+      text-decoration: none;
+      color: $light-text;
+      font-weight: 500;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: $accent-color;
+      }
+    }
+  }
+
+  @media (max-width: $large-desktop) {
+    padding: 1.5rem;
+    height: 100px;
+
+    .logo {
+      font-size: 1.1rem;
+    }
+
+    .nav-links {
+      gap: 2.5rem;
+
+      a {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  @media (max-width: $desktop) {
+    padding: 1.25rem;
+    height: 80px;
+
+    .nav-content {
+      width: 92%;
+    }
+
+    .logo {
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+
+    .nav-links {
+      gap: 2rem;
+
+      a {
+        font-size: 0.75rem;
+        letter-spacing: 1.5px;
+      }
+    }
+  }
+
+  @media (max-width: $tablet) {
+    padding: 1rem;
+    height: 80px;
+
+    .nav-content {
+      width: 95%;
+    }
+
+    .logo {
+      font-size: 0.9rem;
+      letter-spacing: 1.5px;
+    }
+
+    .nav-links {
+      gap: 1.5rem;
+
+      a {
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+      }
+    }
+  }
+
+  @media (max-width: $mobile) {
+    padding: 0.75rem;
+    height: 70px;
+
+    .nav-content {
+      width: 95%;
+    }
+
+    .logo {
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      gap: 1rem;
+
+      a {
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+}
