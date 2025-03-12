@@ -1,48 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import MagneticButton from "../MagneticButton";
 
 const Home = () => {
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [displayedVideoIndex, setDisplayedVideoIndex] = useState(0);
-  const [isHoveringDots, setIsHoveringDots] = useState(false);
-  const [isGlitching, setIsGlitching] = useState(false);
-  const [activeVideoElement, setActiveVideoElement] = useState(0); // 0 or 1 to toggle between two video elements
-  const [lastTransitionTime, setLastTransitionTime] = useState(0); // Track when the last transition happened
-  const [videosLoaded, setVideosLoaded] = useState(false); // Track if videos are loaded
-  const [textVisible, setTextVisible] = useState(false); // Track text visibility state
-  const progressIndicatorsRef = useRef(null);
-  const videoBackgroundRef = useRef(null);
-  const titleWordsRef = useRef([]);
-  const categoryWordsRef = useRef([]);
-  const videoRefs = useRef([null, null]); // Two video refs instead of one
-  const overlayRef = useRef(null);
-  const transitionTriggeredRef = useRef(false); // Use ref for transition state to avoid closure issues
-  const textTimelineRef = useRef(null); // Store the text animation timeline
+  // Main state for the component
+  const [state, setState] = useState({
+    currentIndex: 0,
+    isTransitioning: false,
+    progress: 0,
+    videosLoaded: false,
+  });
 
-  // Clear refs on re-render
-  titleWordsRef.current = [];
-  categoryWordsRef.current = [];
+  // Refs
+  const videoRefs = useRef([null, null]);
+  const intervalRef = useRef(null);
+  const activeVideoRef = useRef(0);
 
-  // Add to title words ref
-  const addToTitleRefs = el => {
-    if (el && !titleWordsRef.current.includes(el)) {
-      titleWordsRef.current.push(el);
-    }
-  };
-
-  // Add to category words ref
-  const addToCategoryRefs = el => {
-    if (el && !categoryWordsRef.current.includes(el)) {
-      categoryWordsRef.current.push(el);
-    }
-  };
-
-  // Example featured works - replace with your actual video URLs
+  // Featured works data
   const featuredWorks = [
     {
       title: "THE WILD - BUCK MASON",
@@ -54,7 +29,6 @@ const Home = () => {
       category: "MUSIC VIDEO",
       videoUrl: "/videos/featured-cuts/beckyg.mp4",
     },
-
     {
       title: "TOMA ALTY x MONOS",
       category: "COMMERCIAL",
@@ -75,351 +49,100 @@ const Home = () => {
       category: "MUSIC VIDEO",
       videoUrl: "/videos/featured-cuts/annick-nicoli-raca.mp4",
     },
-    // {
-    //   title: "OCTOBER LONDON - OCTOBER NIGHTS",
-    //   category: "MUSIC VIDEO",
-    //   videoUrl: "/videos/featured-cuts/october-london.mp4",
-    // },
-    // Add more works here
   ];
 
-  // Set initial opacity to 0 for all text elements
-  useEffect(() => {
-    // Hide all text elements initially - use x instead of y for animations
-    gsap.set(titleWordsRef.current, { x: 0, y: 0, opacity: 0 });
-    gsap.set(categoryWordsRef.current, { x: 0, y: 0, opacity: 0 });
-  }, []);
+  // Destructure state for easier access
+  const { currentIndex, isTransitioning, progress, videosLoaded } = state;
 
-  // Animation for text slide in
-  const animateTextIn = () => {
-    if (isAnimating) return;
+  // Get current and next video elements
+  const getCurrentVideo = () => videoRefs.current[activeVideoRef.current];
+  const getInactiveVideo = () =>
+    videoRefs.current[activeVideoRef.current === 0 ? 1 : 0];
 
-    const titleWords = document.querySelectorAll(".title-section .word");
-    const categoryWords = document.querySelectorAll(".category .word");
+  // Update progress based on video time
+  const updateProgress = () => {
+    const video = getCurrentVideo();
+    if (!video) return;
 
-    // Create a timeline for text animations
-    const tl = gsap.timeline();
+    const currentTime = video.currentTime;
+    const duration = 10; // Fixed 10-second duration
+    const newProgress = Math.min((currentTime / duration) * 100, 100);
 
-    // Set initial position for words - use x only, not y
-    gsap.set([titleWords, categoryWords], {
-      x: 150,
-      opacity: 0,
-      y: 0, // Ensure no vertical shift
-    });
+    setState(prev => ({ ...prev, progress: newProgress }));
 
-    // Animate both title and category words together
-    tl.to([titleWords, categoryWords], {
-      x: 0,
-      opacity: 1,
-      duration: 2,
-      stagger: {
-        each: 0.02,
-        from: "start",
-      },
-      ease: "power2.out",
-    });
-
-    return tl;
+    // Auto transition after 10 seconds
+    if (currentTime >= 10 && !state.isTransitioning) {
+      handleVideoChange((currentIndex + 1) % featuredWorks.length);
+    }
   };
 
-  const animateTextOut = () => {
-    const titleWords = document.querySelectorAll(".title-section .word");
-    const categoryWords = document.querySelectorAll(".category .word");
+  // Handle video change (manual or automatic)
+  const handleVideoChange = newIndex => {
+    if (newIndex === currentIndex || state.isTransitioning) return;
 
-    // Create a timeline for text animations
-    const tl = gsap.timeline();
+    // Set transitioning state
+    setState(prev => ({ ...prev, isTransitioning: true }));
 
-    // Animate both title and category words together - use x only, not y
-    tl.to([titleWords, categoryWords], {
-      x: -150,
-      opacity: 0,
-      y: 0, // Ensure no vertical shift
-      duration: 2,
-      stagger: {
-        each: 0.02,
-        from: "end",
-      },
-      ease: "power2.inOut",
-    });
+    const currentVideo = getCurrentVideo();
+    const nextVideo = getInactiveVideo();
 
-    return tl;
-  };
+    // Pause current video
+    currentVideo.pause();
 
-  // Animation for seamless video transition
-  const animateVideoTransition = (currentVideo, nextVideo, nextIndex) => {
-    return new Promise(resolve => {
-      const masterTl = gsap.timeline({
-        onComplete: () => {
-          setActiveVideoElement(activeVideoElement === 0 ? 1 : 0);
-          setDisplayedVideoIndex(nextIndex);
-          setCurrentVideoIndex(nextIndex);
-          transitionTriggeredRef.current = false;
-          resolve();
-        },
-      });
-
-      // Only do video animations
-      masterTl
-        .to(currentVideo, {
-          opacity: 0,
-          duration: 2,
-          ease: "power1.inOut",
-        })
-        .to(
-          nextVideo,
-          {
-            opacity: 1,
-            duration: 2,
-            ease: "power1.inOut",
-          },
-          "<"
-        )
-        .to(
-          ".overlay",
-          {
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            duration: 2,
-            ease: "power1.inOut",
-            onComplete: () => {
-              gsap.to(".overlay", {
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                duration: 1,
-                ease: "power1.out",
-              });
-            },
-          },
-          "<"
-        );
-    });
-  };
-
-  // Animation for dot pulse
-  const animateDotPulse = dotElement => {
-    // Create a timeline for the pulse animation
-    const tl = gsap.timeline();
-
-    // Pulse animation
-    tl.to(dotElement, {
-      boxShadow: "0 0 0 8px rgba(223, 0, 0, 0.2)",
-      scale: 1.3,
-      duration: 0.35,
-      ease: "power2.out",
-    }).to(dotElement, {
-      boxShadow: "0 0 0 0px rgba(223, 0, 0, 0)",
-      scale: 1,
-      duration: 0.35,
-      ease: "power2.in",
-    });
-
-    return tl;
-  };
-
-  const handleVideoChange = (newIndex, isProgressDot = false) => {
-    if (isAnimating || newIndex === displayedVideoIndex) return;
-
-    console.log(`Changing video to index ${newIndex}`);
-    setIsAnimating(true);
-
-    // Set transition triggered flag to prevent multiple transitions
-    transitionTriggeredRef.current = true;
-
-    // Then start video transition
-    const currentVideo = videoRefs.current[activeVideoElement];
-    const inactiveVideoElement = activeVideoElement === 0 ? 1 : 0;
-    const nextVideo = videoRefs.current[inactiveVideoElement];
-
-    // Set the source of the next video
+    // Prepare next video
     nextVideo.src = featuredWorks[newIndex].videoUrl;
     nextVideo.load();
 
-    // Preload the next video in the sequence for seamless transitions
-    const nextNextIndex = (newIndex + 1) % featuredWorks.length;
-    const preloadNextVideo = new Image();
-    preloadNextVideo.src = featuredWorks[nextNextIndex].videoUrl;
+    // Play next video and handle transition
+    nextVideo
+      .play()
+      .then(() => {
+        // Reset to start of video
+        nextVideo.currentTime = 0;
 
-    // Create a timeline for the entire transition
-    const transitionTl = gsap.timeline();
+        // Toggle active video
+        const newActiveVideo = activeVideoRef.current === 0 ? 1 : 0;
+        activeVideoRef.current = newActiveVideo;
 
-    // Add text out animation at the start
-    transitionTl.add(animateTextOut());
-
-    // When the next video is ready, animate the transition
-    nextVideo.onloadeddata = () => {
-      // Start video transition
-      animateVideoTransition(currentVideo, nextVideo, nextNextIndex).then(
-        () => {
-          // Update state after transition completes
-          setActiveVideoElement(inactiveVideoElement);
-          setDisplayedVideoIndex(newIndex);
-          setCurrentVideoIndex(newIndex);
-
-          // Reset the current time of the now inactive video
-          currentVideo.currentTime = 0;
-          currentVideo.pause();
-
-          // Add text in animation
-          animateTextIn();
-
-          // Update animation state
-          setIsAnimating(false);
-          transitionTriggeredRef.current = false;
-        }
-      );
-    };
-
-    // Handle errors loading the next video
-    nextVideo.onerror = () => {
-      console.error("Error loading video:", featuredWorks[newIndex].videoUrl);
-      setIsAnimating(false);
-      transitionTriggeredRef.current = false;
-    };
+        // Update state with new index and reset transition state
+        setState(prev => ({
+          ...prev,
+          currentIndex: newIndex,
+          progress: 0,
+          isTransitioning: false,
+        }));
+      })
+      .catch(err => {
+        console.error("Error playing video:", err);
+        setState(prev => ({ ...prev, isTransitioning: false }));
+      });
   };
 
   // Handle progress dot click
   const handleProgressDotClick = index => {
-    handleVideoChange(index, true);
+    if (index !== currentIndex) {
+      handleVideoChange(index);
+    }
   };
 
-  // Handle video time updates and progress
-  useEffect(() => {
-    if (!videosLoaded) return;
+  // Handle arrow click
+  const handleArrowClick = direction => {
+    if (state.isTransitioning) return;
 
-    const activeVideo = videoRefs.current[activeVideoElement];
-    const inactiveVideo = videoRefs.current[activeVideoElement === 0 ? 1 : 0];
-    const VIDEO_DURATION = 10; // Base duration before fade starts
+    const totalVideos = featuredWorks.length;
+    let newIndex;
 
-    const handleTimeUpdate = () => {
-      if (!activeVideo) return;
-
-      const currentTime = activeVideo.currentTime;
-      const progress = (currentTime / VIDEO_DURATION) * 100;
-      setVideoProgress(Math.min(progress, 100));
-
-      // Start transition at 10 seconds (fade will take 2 seconds)
-      if (currentTime >= VIDEO_DURATION && !transitionTriggeredRef.current) {
-        console.log("Starting transition");
-        transitionTriggeredRef.current = true;
-
-        // Calculate next video index
-        const nextIndex = (currentVideoIndex + 1) % featuredWorks.length;
-
-        // Prepare next video
-        if (inactiveVideo.src !== featuredWorks[nextIndex].videoUrl) {
-          inactiveVideo.src = featuredWorks[nextIndex].videoUrl;
-          inactiveVideo.load();
-        }
-
-        // Start playing next video and begin transition
-        const startTransition = () => {
-          inactiveVideo
-            .play()
-            .then(() => {
-              animateVideoTransition(activeVideo, inactiveVideo, nextIndex);
-            })
-            .catch(err => {
-              console.error("Error playing next video:", err);
-              transitionTriggeredRef.current = false;
-            });
-        };
-
-        // If video is loaded, start transition, otherwise wait for it
-        if (inactiveVideo.readyState >= 3) {
-          startTransition();
-        } else {
-          inactiveVideo.addEventListener(
-            "canplay",
-            () => {
-              startTransition();
-            },
-            { once: true }
-          );
-        }
-      }
-    };
-
-    const handleVideoEnd = () => {
-      if (transitionTriggeredRef.current) return; // Prevent duplicate transitions
-
-      console.log("Video ended, moving to next");
-      const nextIndex = (currentVideoIndex + 1) % featuredWorks.length;
-      handleVideoChange(nextIndex);
-    };
-
-    const handleLoadedMetadata = () => {
-      if (activeVideo) {
-        // Get actual video duration
-        if (activeVideo.duration && !isNaN(activeVideo.duration)) {
-          console.log(`Video duration: ${activeVideo.duration}s`);
-        }
-
-        // Ensure video plays
-        activeVideo
-          .play()
-          .catch(err => console.error("Error playing video:", err));
-      }
-    };
-
-    // Handle stalled or waiting events
-    const handleStalled = () => {
-      console.log("Video stalled, attempting to resume");
-      if (activeVideo && !transitionTriggeredRef.current) {
-        activeVideo
-          .play()
-          .catch(err => console.error("Error resuming stalled video:", err));
-      }
-    };
-
-    // Handle video errors
-    const handleVideoError = () => {
-      console.error("Video error occurred");
-      if (!transitionTriggeredRef.current) {
-        const nextIndex = (currentVideoIndex + 1) % featuredWorks.length;
-        handleVideoChange(nextIndex);
-      }
-    };
-
-    if (activeVideo) {
-      activeVideo.addEventListener("timeupdate", handleTimeUpdate);
-      activeVideo.addEventListener("ended", handleVideoEnd);
-      activeVideo.addEventListener("loadedmetadata", handleLoadedMetadata);
-      activeVideo.addEventListener("stalled", handleStalled);
-      activeVideo.addEventListener("waiting", handleStalled);
-      activeVideo.addEventListener("error", handleVideoError);
-
-      // If metadata is already loaded, initialize duration
-      if (activeVideo.readyState >= 1) {
-        handleLoadedMetadata();
-      }
-
-      // Ensure video is playing
-      if (activeVideo.paused) {
-        activeVideo
-          .play()
-          .catch(err => console.error("Error playing video in effect:", err));
-      }
+    if (direction === "next") {
+      newIndex = (currentIndex + 1) % totalVideos;
+    } else {
+      newIndex = (currentIndex - 1 + totalVideos) % totalVideos;
     }
 
-    return () => {
-      if (activeVideo) {
-        activeVideo.removeEventListener("timeupdate", handleTimeUpdate);
-        activeVideo.removeEventListener("ended", handleVideoEnd);
-        activeVideo.removeEventListener("loadedmetadata", handleLoadedMetadata);
-        activeVideo.removeEventListener("stalled", handleStalled);
-        activeVideo.removeEventListener("waiting", handleStalled);
-        activeVideo.removeEventListener("error", handleVideoError);
-      }
-    };
-  }, [
-    currentVideoIndex,
-    featuredWorks.length,
-    isAnimating,
-    activeVideoElement,
-    videosLoaded,
-  ]);
+    handleVideoChange(newIndex);
+  };
 
-  // Initial setup on component mount
+  // Initialize videos on component mount
   useEffect(() => {
-    // Initialize the first video
     const firstVideo = videoRefs.current[0];
     const secondVideo = videoRefs.current[1];
 
@@ -427,26 +150,19 @@ const Home = () => {
       firstVideo.src = featuredWorks[0].videoUrl;
       firstVideo.load();
 
-      // Preload the second video for seamless first transition
+      // Preload second video
       if (secondVideo && featuredWorks.length > 1) {
         secondVideo.src = featuredWorks[1].videoUrl;
         secondVideo.load();
       }
 
-      // When the first video is ready to play
+      // Play first video when ready
       const handleFirstVideoReady = () => {
-        console.log("First video ready to play");
+        firstVideo.currentTime = 0;
         firstVideo
           .play()
           .then(() => {
-            console.log("First video playing");
-            setVideosLoaded(true);
-
-            // Small delay to ensure DOM is ready for text animation
-            setTimeout(() => {
-              console.log("Initial text animation");
-              animateTextIn();
-            }, 100);
+            setState(prev => ({ ...prev, videosLoaded: true }));
           })
           .catch(err => console.error("Error playing initial video:", err));
 
@@ -456,127 +172,267 @@ const Home = () => {
       firstVideo.addEventListener("canplay", handleFirstVideoReady);
     }
 
-    // Set initial transition time
-    setLastTransitionTime(Date.now());
-
-    // Reset transition flag
-    transitionTriggeredRef.current = false;
-
+    // Cleanup
     return () => {
-      const firstVideo = videoRefs.current[0];
       if (firstVideo) {
         firstVideo.removeEventListener("canplay", () => {});
       }
 
-      // Clean up any running animations
-      if (textTimelineRef.current) {
-        textTimelineRef.current.kill();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
   }, []);
 
-  // Initialize text and video on component mount
+  // Set up progress tracking
   useEffect(() => {
-    if (videosLoaded) {
-      // Set initial opacity for text elements to ensure they're hidden initially
-      gsap.set(".word", { opacity: 0, x: 150, y: 0 }); // Use x instead of y
+    if (!videosLoaded) return;
 
-      // Animate text in after a short delay
-      setTimeout(() => {
-        animateTextIn();
-      }, 500);
-    }
-  }, [videosLoaded]);
+    const video = getCurrentVideo();
+    if (!video) return;
 
-  // Trigger text animations when displayedVideoIndex changes
+    const handleTimeUpdate = () => {
+      updateProgress();
+    };
+
+    video.addEventListener("timeupdate", handleTimeUpdate);
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [videosLoaded, currentIndex, activeVideoRef.current]);
+
+  // Handle video errors and stalls
   useEffect(() => {
-    if (videosLoaded && !isAnimating) {
-      animateTextIn();
-    }
-  }, [displayedVideoIndex, videosLoaded]);
+    if (!videosLoaded) return;
+
+    const video = getCurrentVideo();
+    if (!video) return;
+
+    const handleError = () => {
+      console.error("Video error occurred");
+      if (!state.isTransitioning) {
+        handleVideoChange((currentIndex + 1) % featuredWorks.length);
+      }
+    };
+
+    const handleStalled = () => {
+      console.log("Video stalled, attempting to resume");
+      if (!state.isTransitioning) {
+        video.play().catch(err => console.error("Error resuming video:", err));
+      }
+    };
+
+    video.addEventListener("error", handleError);
+    video.addEventListener("stalled", handleStalled);
+    video.addEventListener("waiting", handleStalled);
+
+    return () => {
+      video.removeEventListener("error", handleError);
+      video.removeEventListener("stalled", handleStalled);
+      video.removeEventListener("waiting", handleStalled);
+    };
+  }, [videosLoaded, currentIndex, state.isTransitioning]);
+
+  // Text animation variants for Framer Motion
+  const textVariants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.5,
+        staggerChildren: 0.1,
+      },
+    },
+    exit: {
+      opacity: 0,
+      x: -50,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const wordVariants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 },
+  };
 
   return (
     <div className="home">
-      <div className="video-background" ref={videoBackgroundRef}>
+      <div className="video-background">
         {/* First video element */}
         <video
           muted
           playsInline
-          loop={false}
           preload="auto"
           className={`background-video ${
-            activeVideoElement === 0 ? "active" : "inactive"
+            activeVideoRef.current === 0 ? "active" : "inactive"
           }`}
           ref={el => (videoRefs.current[0] = el)}
+          style={{ opacity: activeVideoRef.current === 0 ? 1 : 0 }}
         />
 
         {/* Second video element */}
         <video
           muted
           playsInline
-          loop={false}
           preload="auto"
           className={`background-video ${
-            activeVideoElement === 1 ? "active" : "inactive"
+            activeVideoRef.current === 1 ? "active" : "inactive"
           }`}
           ref={el => (videoRefs.current[1] = el)}
-          style={{ opacity: 0 }} // Initially hidden
+          style={{ opacity: activeVideoRef.current === 1 ? 1 : 0 }}
         />
 
-        <div className="overlay" ref={overlayRef} />
-        <div className="content">
-          <div className="content-container">
-            <div className="title-section">
-              <h1>
-                {featuredWorks[displayedVideoIndex].title
-                  .split(" ")
-                  .map((word, index) => (
-                    <span key={index} className="word" ref={addToTitleRefs}>
-                      {word}{" "}
-                    </span>
-                  ))}
-              </h1>
-            </div>
+        <div className="overlay" />
 
-            <div className="bottom-section">
-              <div className="category">
-                {featuredWorks[displayedVideoIndex].category
-                  .split(" ")
-                  .map((word, index) => (
-                    <span key={index} className="word" ref={addToCategoryRefs}>
-                      {word}{" "}
-                    </span>
-                  ))}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            className="content"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={textVariants}
+          >
+            <div className="content-container">
+              <div className="title-section">
+                <h1>
+                  {featuredWorks[currentIndex].title
+                    .split(" ")
+                    .map((word, index) => (
+                      <motion.span
+                        key={index}
+                        className="word"
+                        variants={wordVariants}
+                      >
+                        {word}{" "}
+                      </motion.span>
+                    ))}
+                </h1>
               </div>
-              <MagneticButton scale={0.7}>
-                <Link href="/works" className="see-more">
-                  See More
-                </Link>
-              </MagneticButton>
+
+              <div className="bottom-section">
+                <div className="category">
+                  {featuredWorks[currentIndex].category
+                    .split(" ")
+                    .map((word, index) => (
+                      <motion.span
+                        key={index}
+                        className="word"
+                        variants={wordVariants}
+                      >
+                        {word}{" "}
+                      </motion.span>
+                    ))}
+                </div>
+                <MagneticButton scale={0.7}>
+                  <Link href="/works" className="see-more">
+                    See More
+                  </Link>
+                </MagneticButton>
+              </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div className="counter">{`0${currentVideoIndex + 1}`}</div>
+      <motion.div
+        className="counter"
+        key={`counter-${currentIndex}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        {`0${currentIndex + 1}`}
+      </motion.div>
 
-      <div className="progress-indicators" ref={progressIndicatorsRef}>
-        {featuredWorks.map((work, index) => (
+      <div className="navigation-container">
+        <div className="navigation-arrows">
           <div
-            key={index}
-            className={`progress-dot ${
-              index === currentVideoIndex ? "active" : ""
-            }`}
-            onClick={() => handleProgressDotClick(index)}
+            className="arrow arrow-left"
+            onClick={() => handleArrowClick("prev")}
           >
-            {index === currentVideoIndex && (
-              <div
-                className="progress-bar"
-                style={{ width: `${videoProgress}%` }}
-              />
-            )}
+            <svg
+              fill="#ffffff"
+              version="1.1"
+              id="Capa_1"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlnsXlink="http://www.w3.org/1999/xlink"
+              viewBox="0 0 348.692 348.692"
+              xmlSpace="preserve"
+              stroke="#ffffff"
+              transform="rotate(0)matrix(-1, 0, 0, 1, 0, 0)"
+            >
+              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <g>
+                  <path d="M345.649,130.289c-35.495-17.136-64.872-40.392-91.8-68.544c-3.06-3.06-6.731-2.448-9.18,0.612 c-1.224-0.612-1.836-1.224-2.448-1.224c-7.344,0-7.956,11.016-7.956,15.912c-0.611,11.016-1.224,21.42-1.224,32.436 c-63.648-0.612-127.909,0-191.557-9.792c-3.06-0.612-6.732,0.612-7.956,3.672c-0.612,0-1.836,0-2.448,0.612 c-5.508,4.284-10.404,9.18-15.3,14.076c-4.896,4.284-8.568,9.792-13.464,13.464c-3.672,3.06-2.448,6.732,0,8.568 c-0.612,23.256-1.836,45.9,1.224,69.156c0.612,6.731,10.404,7.956,12.24,3.06h0.612c59.976,5.508,122.4,6.12,182.376,2.448 c-10.403,20.196-2.447,42.84,1.225,65.484c0.611,3.672,3.06,4.896,5.508,4.283c0,3.672,3.672,6.12,6.731,3.061 c37.332-36.108,81.396-58.752,123.013-88.128c4.284-3.061,2.447-10.404-3.061-10.404c6.732-14.688,10.404-30.6,15.912-45.9 c0.612-1.836,0.612-3.672-0.611-4.896C349.322,136.409,349.322,132.125,345.649,130.289z M235.49,122.333 c3.06,0,4.896-1.836,6.119-4.284c1.837-0.612,3.673-2.448,3.673-5.508c0-9.792,1.224-19.584,2.447-29.376 c0-2.448,0.612-5.508,1.225-7.956c23.256,25.704,51.408,46.512,82.62,62.424c-14.688,15.3-30.601,28.152-47.736,40.391 c-12.852,9.181-27.54,17.137-39.78,26.929c0-0.612,0-1.224,0-1.836c0-10.404,0.612-20.808-0.611-31.212 c3.06-3.672,0.611-10.404-6.12-9.18c-63.649,8.568-125.461-2.448-189.721,1.836c-1.224-17.136-1.836-34.272-1.836-51.408 C108.805,122.945,172.454,122.945,235.49,122.333z M211.622,275.945c-3.672-21.42-11.628-45.288-3.061-66.097 c0.612-1.224,0-1.836-0.611-2.447c-0.612-1.836-2.448-3.672-5.509-3.672c-61.2-3.673-124.848-3.061-186.048,2.447h-0.612 c-2.448-21.42-4.284-43.452-4.896-64.872c0.612-0.612,1.224-1.836,1.836-3.06c1.836-5.508,6.732-11.016,10.404-15.3 c3.06-3.672,6.732-7.344,9.792-11.628c0,18.972,1.836,37.332,4.896,56.304c0.612,2.448,3.06,3.672,5.508,3.672 c0.612,1.224,1.224,1.836,3.06,1.836c58.14,5.508,130.357,23.868,187.884,4.284c-1.224,8.568-2.448,16.524-3.672,25.092 c-0.612,4.896-3.06,12.24-1.836,18.36c-1.224,3.06,0.612,6.731,4.284,6.731c2.448,1.225,5.508,0.612,7.344-1.224l0.612-0.612 c0.611,0,1.224,0,1.836,0c2.448,0,3.672-1.836,3.06-3.672c29.988-14.076,61.2-37.943,85.068-62.424 c-3.06,11.628-5.508,23.256-7.956,34.884C281.39,210.461,240.998,243.509,211.622,275.945z"></path>
+                </g>
+              </g>
+            </svg>
           </div>
-        ))}
+
+          <div className="progress-indicators">
+            {featuredWorks.map((work, index) => (
+              <div
+                key={index}
+                className={`progress-dot ${
+                  index === currentIndex ? "active" : ""
+                }`}
+                onClick={() => handleProgressDotClick(index)}
+              >
+                {index === currentIndex && (
+                  <motion.div
+                    className="progress-bar"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.1, ease: "linear" }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="arrow arrow-right"
+            onClick={() => handleArrowClick("next")}
+          >
+            <svg
+              fill="#ffffff"
+              version="1.1"
+              id="Capa_1"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlnsXlink="http://www.w3.org/1999/xlink"
+              viewBox="0 0 348.692 348.692"
+              xmlSpace="preserve"
+              stroke="#ffffff"
+              transform="rotate(0)matrix(1, 0, 0, 1, 0, 0)"
+            >
+              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <g>
+                  <path d="M345.649,130.289c-35.495-17.136-64.872-40.392-91.8-68.544c-3.06-3.06-6.731-2.448-9.18,0.612 c-1.224-0.612-1.836-1.224-2.448-1.224c-7.344,0-7.956,11.016-7.956,15.912c-0.611,11.016-1.224,21.42-1.224,32.436 c-63.648-0.612-127.909,0-191.557-9.792c-3.06-0.612-6.732,0.612-7.956,3.672c-0.612,0-1.836,0-2.448,0.612 c-5.508,4.284-10.404,9.18-15.3,14.076c-4.896,4.284-8.568,9.792-13.464,13.464c-3.672,3.06-2.448,6.732,0,8.568 c-0.612,23.256-1.836,45.9,1.224,69.156c0.612,6.731,10.404,7.956,12.24,3.06h0.612c59.976,5.508,122.4,6.12,182.376,2.448 c-10.403,20.196-2.447,42.84,1.225,65.484c0.611,3.672,3.06,4.896,5.508,4.283c0,3.672,3.672,6.12,6.731,3.061 c37.332-36.108,81.396-58.752,123.013-88.128c4.284-3.061,2.447-10.404-3.061-10.404c6.732-14.688,10.404-30.6,15.912-45.9 c0.612-1.836,0.612-3.672-0.611-4.896C349.322,136.409,349.322,132.125,345.649,130.289z M235.49,122.333 c3.06,0,4.896-1.836,6.119-4.284c1.837-0.612,3.673-2.448,3.673-5.508c0-9.792,1.224-19.584,2.447-29.376 c0-2.448,0.612-5.508,1.225-7.956c23.256,25.704,51.408,46.512,82.62,62.424c-14.688,15.3-30.601,28.152-47.736,40.391 c-12.852,9.181-27.54,17.137-39.78,26.929c0-0.612,0-1.224,0-1.836c0-10.404,0.612-20.808-0.611-31.212 c3.06-3.672,0.611-10.404-6.12-9.18c-63.649,8.568-125.461-2.448-189.721,1.836c-1.224-17.136-1.836-34.272-1.836-51.408 C108.805,122.945,172.454,122.945,235.49,122.333z M211.622,275.945c-3.672-21.42-11.628-45.288-3.061-66.097 c0.612-1.224,0-1.836-0.611-2.447c-0.612-1.836-2.448-3.672-5.509-3.672c-61.2-3.673-124.848-3.061-186.048,2.447h-0.612 c-2.448-21.42-4.284-43.452-4.896-64.872c0.612-0.612,1.224-1.836,1.836-3.06c1.836-5.508,6.732-11.016,10.404-15.3 c3.06-3.672,6.732-7.344,9.792-11.628c0,18.972,1.836,37.332,4.896,56.304c0.612,2.448,3.06,3.672,5.508,3.672 c0.612,1.224,1.224,1.836,3.06,1.836c58.14,5.508,130.357,23.868,187.884,4.284c-1.224,8.568-2.448,16.524-3.672,25.092 c-0.612,4.896-3.06,12.24-1.836,18.36c-1.224,3.06,0.612,6.731,4.284,6.731c2.448,1.225,5.508,0.612,7.344-1.224l0.612-0.612 c0.611,0,1.224,0,1.836,0c2.448,0,3.672-1.836,3.06-3.672c29.988-14.076,61.2-37.943,85.068-62.424 c-3.06,11.628-5.508,23.256-7.956,34.884C281.39,210.461,240.998,243.509,211.622,275.945z"></path>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   );
