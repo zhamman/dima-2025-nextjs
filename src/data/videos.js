@@ -73,7 +73,7 @@ export const works = [
     category: "PRODUCTION",
     videoUrl: "/videos/all/BeckyG-OtroCapítulo.mp4",
     previewUrl: "/videos/previews/beckyg.mp4",
-    thumbnail: "/images/thumbnails/beckyG.jpg",
+    thumbnail: "/images/thumbnails/beckyg.jpg",
     number: "05",
     director: "Dmitriy Usov",
     cinematography: "Dmitriy Usov",
