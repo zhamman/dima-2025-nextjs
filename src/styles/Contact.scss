@@ -39,6 +39,7 @@
         width: 10rem;
         height: 100%;
         z-index: 2;
+        pointer-events: none;
 
         @media (max-width: $tablet) {
           width: 6rem;
@@ -61,12 +62,9 @@
     }
 
     .marquee-content {
-      flex-shrink: 0;
       display: flex;
-      justify-content: space-around;
-      min-width: 100%;
-      animation: scroll 120s linear infinite;
       white-space: nowrap;
+      will-change: transform;
 
       h1 {
         font-family: $font-primary;
@@ -123,6 +121,26 @@
       text-transform: uppercase;
       padding: 2rem 0;
       letter-spacing: 1.5px;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: radial-gradient(
+          circle at center,
+          rgba(255, 255, 255, 0.25) 0%,
+          rgba(255, 255, 255, 0.15) 25%,
+          rgba(255, 255, 255, 0) 50%
+        );
+        animation: spotlight 6s ease-in-out infinite;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+      }
 
       @media (max-width: $tablet) {
         padding: 1.5rem 0;
@@ -134,6 +152,9 @@
         font-weight: 600;
         line-height: 1.5;
         margin: 0;
+        position: relative;
+        z-index: 1;
+        mix-blend-mode: screen;
 
         @media (max-width: $desktop) {
           font-size: 2.5rem;
@@ -329,11 +350,23 @@
   }
 }
 
-@keyframes scroll {
+@keyframes spotlight {
   0% {
-    transform: translateX(0);
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(50%, 50%) scale(1.2);
+    opacity: 0.8;
+  }
+  75% {
+    opacity: 1;
   }
   100% {
-    transform: translateX(-100%);
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
   }
 }

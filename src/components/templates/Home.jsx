@@ -50,10 +50,11 @@ const Home = () => {
       videoUrl: "/videos/featured-cuts/the-wild.mp4",
     },
     {
-      title: "RUSSIAN MARTIAN - LOOSING MY MIND",
+      title: "BECKY G - OTRO CAPÍTULO",
       category: "MUSIC VIDEO",
-      videoUrl: "/videos/featured-cuts/russian-martian-loosing-mind.mp4",
+      videoUrl: "/videos/featured-cuts/beckyg.mp4",
     },
+
     {
       title: "TOMA ALTY x MONOS",
       category: "COMMERCIAL",
@@ -74,6 +75,11 @@ const Home = () => {
       category: "MUSIC VIDEO",
       videoUrl: "/videos/featured-cuts/annick-nicoli-raca.mp4",
     },
+    // {
+    //   title: "OCTOBER LONDON - OCTOBER NIGHTS",
+    //   category: "MUSIC VIDEO",
+    //   videoUrl: "/videos/featured-cuts/october-london.mp4",
+    // },
     // Add more works here
   ];
 

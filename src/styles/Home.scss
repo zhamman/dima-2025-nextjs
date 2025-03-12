@@ -100,6 +100,32 @@
             left: 50%;
             transform: translate(-50%, -50%);
 
+            @media (max-width: $desktop) {
+              font-size: 3.5rem;
+              width: 85%;
+              letter-spacing: 1.5px;
+            }
+
+            @media (max-width: $tablet) {
+              font-size: 2.8rem;
+              width: 90%;
+              letter-spacing: 1px;
+              text-shadow: -1.5px 1.5px 0 $accent-color;
+            }
+
+            @media (max-width: $mobile) {
+              font-size: 2rem;
+              width: 95%;
+              letter-spacing: 0.5px;
+              text-shadow: -1px 1px 0 $accent-color;
+            }
+
+            @media (max-width: 380px) {
+              font-size: 1.6rem;
+              width: 100%;
+              letter-spacing: 0.3px;
+            }
+
             .word {
               display: inline-block;
               white-space: pre-wrap;
@@ -119,6 +145,19 @@
           position: relative;
           bottom: 0;
 
+          @media (max-width: $desktop) {
+            padding: 0 1.5rem;
+          }
+
+          @media (max-width: $tablet) {
+            padding: 0 1rem;
+          }
+
+          @media (max-width: $mobile) {
+            padding: 0 0.5rem;
+            gap: 1rem;
+          }
+
           .category {
             font-family: $font-secondary;
             font-size: 0.9rem;
@@ -126,6 +165,29 @@
             font-weight: 400;
             opacity: 0.9;
             text-align: left;
+            max-width: 60%;
+
+            @media (max-width: $desktop) {
+              font-size: 0.85rem;
+              letter-spacing: 2.5px;
+            }
+
+            @media (max-width: $tablet) {
+              font-size: 0.8rem;
+              letter-spacing: 2px;
+              max-width: 55%;
+            }
+
+            @media (max-width: $mobile) {
+              font-size: 0.7rem;
+              letter-spacing: 1.5px;
+              max-width: 50%;
+            }
+
+            @media (max-width: 380px) {
+              font-size: 0.65rem;
+              letter-spacing: 1px;
+            }
 
             .word {
               display: inline-block;
@@ -151,6 +213,31 @@
             border-radius: 5px;
             text-align: right;
             transition: all 0.3s ease;
+
+            @media (max-width: $desktop) {
+              font-size: 0.75rem;
+              letter-spacing: 2.5px;
+              padding: 8px 16px;
+            }
+
+            @media (max-width: $tablet) {
+              font-size: 0.7rem;
+              letter-spacing: 2px;
+              padding: 7px 14px;
+            }
+
+            @media (max-width: $mobile) {
+              font-size: 0.65rem;
+              letter-spacing: 1.5px;
+              padding: 6px 12px;
+            }
+
+            @media (max-width: 380px) {
+              font-size: 0.6rem;
+              letter-spacing: 1px;
+              padding: 5px 10px;
+            }
+
             &:hover {
               text-decoration: none;
               color: $accent-color;

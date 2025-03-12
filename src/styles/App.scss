@@ -79,10 +79,15 @@ body {
   height: 300%;
   width: 300%;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 10;
   opacity: 0.06;
   background-image: url("https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Dissolve_Noise_Texture.png");
   animation: grain 8s steps(10) infinite;
+}
+
+// Hide grain when videos are playing
+.hide-grain .grain {
+  display: none !important;
 }
 
 @keyframes grain {

@@ -18,6 +18,17 @@ const VideoPlayer = ({ id }) => {
   const youtubePlayerRef = useRef(null);
   const vimeoPlayerRef = useRef(null);
 
+  // Add hide-grain class to body when component mounts
+  useEffect(() => {
+    // Add class to hide grain
+    document.body.classList.add("hide-grain");
+
+    // Remove class when component unmounts
+    return () => {
+      document.body.classList.remove("hide-grain");
+    };
+  }, []);
+
   // Find the current video and set up suggested videos
   useEffect(() => {
     // Only proceed if videoId is defined and router is ready

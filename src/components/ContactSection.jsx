@@ -75,8 +75,8 @@ const ContactSection = ({ isContactInView }) => {
           variants={slideInRightVariants}
         >
           <MagneticButton scale={0.5}>
-            <a href="dmitriyusv@gmail.com" className={styles.emailLink}>
-              dmitriyusv@gmail.com
+            <a href="mailto:dimauzfilm@gmail.com" className={styles.emailLink}>
+              dimauzfilm@gmail.com
             </a>
           </MagneticButton>
         </motion.div>
