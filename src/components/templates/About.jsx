@@ -342,7 +342,7 @@ const About = () => {
           <div className="bio-content">
             <div className="bio-text" ref={bioTextRef} data-speed="0.1">
               <p className="paragraph">
-                {"Dmitriy Usov is an award-winning Russian-Cypriot director, writer, and editor based in Los Angeles. Dmitriy's portfolio encompasses a wide spectrum of projects, from captivating commercials and visually stunning music videos to thought-provoking short films. His versatility is a testament to his dedication to the craft of storytelling in various forms."
+                {"Dmitriy Usov is an award-winning Russian-Cypriot director, producer, and editor based in Los Angeles. Dmitriy's portfolio encompasses a wide spectrum of projects, from captivating commercials and visually stunning music videos to thought-provoking short films. His versatility is a testament to his dedication to the craft of storytelling in various forms."
                   .split(" ")
                   .map((word, index) => (
                     <span
