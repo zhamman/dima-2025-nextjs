@@ -13,6 +13,17 @@ const nextConfig = {
     // Remove console logs in production
     removeConsole: process.env.NODE_ENV === "production",
   },
+  async redirects() {
+    return [
+      // Add your old routes here
+      // Example format:
+      {
+        source: "/portfolio",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

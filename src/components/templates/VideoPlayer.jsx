@@ -11,6 +11,7 @@ const VideoPlayer = ({ id }) => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [suggestedVideos, setSuggestedVideos] = useState([]);
   const [showBackButton, setShowBackButton] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const videoWrapperRef = useRef(null);
 
   // Keep refs for the video elements
@@ -66,6 +67,14 @@ const VideoPlayer = ({ id }) => {
   // Navigate back to works page
   const handleBackClick = () => {
     router.push("/works");
+  };
+
+  const handleVideoClick = videoId => {
+    setIsTransitioning(true);
+    // Add a small delay to allow the transition to start
+    setTimeout(() => {
+      router.push(`/video/${videoId}`);
+    }, 200);
   };
 
   // Helper function to render all available credits
@@ -153,7 +162,9 @@ const VideoPlayer = ({ id }) => {
   }
 
   return (
-    <div className="video-player-page">
+    <div
+      className={`video-player-page ${isTransitioning ? "transitioning" : ""}`}
+    >
       <div className="video-player-container">
         <div className="video-wrapper" ref={videoWrapperRef}>
           {renderVideoEmbed()}
@@ -212,10 +223,10 @@ const VideoPlayer = ({ id }) => {
           <h3>MORE VIDEOS</h3>
           <div className="suggested-grid">
             {suggestedVideos.map(video => (
-              <Link
-                href={`/video/${video.id}`}
+              <div
                 key={video.id}
                 className="suggested-video"
+                onClick={() => handleVideoClick(video.id)}
               >
                 <div className="thumbnail-container">
                   <img src={video.thumbnail} alt="" />
@@ -224,7 +235,7 @@ const VideoPlayer = ({ id }) => {
                   <span className="number">{video.number}</span>
                   <span className="title">{video.title}</span>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
