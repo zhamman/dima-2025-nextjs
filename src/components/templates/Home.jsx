@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Head from "next/head";
 import MagneticButton from "../MagneticButton";
 
 const Home = () => {
@@ -263,6 +264,13 @@ const Home = () => {
 
   return (
     <div className="home">
+      <Head>
+        <title>Dmitriy Usov - Film & Commercial Director</title>
+        <meta
+          name="description"
+          content="Award-winning Film & Commercial Director, producer, and screenwriter."
+        />
+      </Head>
       <div className="video-background">
         {/* First video element */}
         <video

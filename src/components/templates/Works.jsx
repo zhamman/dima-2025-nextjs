@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { categories, works } from "../../data/videos";
 import useLocomotiveScroll from "../../hooks/useLocomotiveScroll";
 import MagneticButton from "../MagneticButton";
+import Head from "next/head";
 
 const Works = () => {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -212,7 +213,14 @@ const Works = () => {
       : works.filter(work => work.category === selectedCategory);
 
   return (
-    <div className="works">
+    <div className="works" ref={scrollContainerRef}>
+      <Head>
+        <title>Works - Dmitriy Usov</title>
+        <meta
+          name="description"
+          content="Explore the portfolio of Dmitriy Usov's award-winning films, commercials, and video productions."
+        />
+      </Head>
       <div
         ref={scrollContainerRef}
         className="scroll-container"
