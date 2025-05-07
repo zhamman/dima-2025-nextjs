@@ -5,7 +5,6 @@ import { useRouter } from "next/router";
 import useLocomotiveScroll from "../../hooks/useLocomotiveScroll";
 import MagneticButton from "../MagneticButton";
 import ContactSection from "../ContactSection";
-import Head from "next/head";
 
 // Animation variants for text reveal
 const slideUp = {
@@ -149,13 +148,6 @@ const About = () => {
 
   return (
     <div className="about" ref={circleContainerRef}>
-      <Head>
-        <title>About - Dmitriy Usov</title>
-        <meta
-          name="description"
-          content="Learn more about Dmitriy Usov, an award-winning Film & Commercial Director specializing in magical realism and historical storytelling."
-        />
-      </Head>
       <div
         ref={scrollContainerRef}
         className="scroll-container"

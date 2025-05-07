@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { works } from "../../data/videos";
 import { motion } from "framer-motion";
@@ -166,21 +165,6 @@ const VideoPlayer = ({ id }) => {
     <div
       className={`video-player-page ${isTransitioning ? "transitioning" : ""}`}
     >
-      <Head>
-        <title>
-          {currentVideo
-            ? `${currentVideo.title} - Dmitriy Usov`
-            : "Video - Dmitriy Usov"}
-        </title>
-        <meta
-          name="description"
-          content={
-            currentVideo
-              ? `Watch ${currentVideo.title} by Dmitriy Usov`
-              : "Watch videos by Dmitriy Usov"
-          }
-        />
-      </Head>
       <div className="video-player-container">
         <div className="video-wrapper" ref={videoWrapperRef}>
           {renderVideoEmbed()}
